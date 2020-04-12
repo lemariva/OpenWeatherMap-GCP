@@ -10,6 +10,7 @@ LOOP_TIME_SLEEP = 60 * 10
 
 def get_weather(api_key, lat, lon):
     url = "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&units=metric&appid={}".format(lat, lon, api_key)
+    print("Getting the weather...")
     r = requests.get(url)
     return r.json()
 
@@ -20,10 +21,11 @@ def callback(message_future):
     else:
         print(message_future.result())
 
-def main(argv=None):
+def run(argv=None):
+    parser = argparse.ArgumentParser()
 
     publisher = pubsub_v1.PublisherClient()
-    parser = argparse.ArgumentParser()
+    
     parser.add_argument(
       '--api', dest='api', required=True, help='OpenWeatherMap API')
     parser.add_argument(
@@ -91,4 +93,4 @@ def main(argv=None):
   
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
-    main()
+    run()
