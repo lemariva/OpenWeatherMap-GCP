@@ -2,6 +2,7 @@ import argparse
 import requests
 import logging
 import sys
+import json
 from google.cloud import pubsub_v1
 import time
 
@@ -47,39 +48,44 @@ def main(argv=None):
 
     starttime = time.time()
 
+    last_dt = 0
     while True:
         weather = get_weather(api_key, lat_long[0], lat_long[1])
-    
-        weather_small = {}
-        weather_small["timestamp"] = weather["dt"]
-        weather_small["sunrise"] = weather["sys"]["sunrise"]
-        weather_small["sunset"] = weather["sys"]["sunset"]
-        weather_small["id"] = weather["weather"][0]["id"]
-        weather_small["main"] = weather["weather"][0]["main"]
-        weather_small["icon"] = weather["weather"][0]["icon"]
-        weather_small["temp"] = weather["main"]["temp"]
-        weather_small["feels_like"] = weather["main"]["feels_like"]
-        weather_small["humidity"] = weather["main"]["humidity"]
-        weather_small["visibility"] = weather["visibility"]
-        weather_small["w_speed"] = weather["wind"]["speed"]
-        weather_small["w_deg"] = weather["wind"]["deg"]
-        
-        if "clouds" in weather:
-            weather_small["all_clouds"] = weather["clouds"]["all"]
-        if "rain" in weather:
-            if "1h" in weather["rain"]:  
-                weather_small["rain_1h"] = weather["rain"]["1h"]
-            if "3h" in weather["rain"]:  
-                weather_small["rain_3h"] = weather["rain"]["3h"]
-        if "snow" in weather:
-            if "1h" in weather["snow"]:  
-                weather_small["snow_1h"] = weather["snow"]["1h"]
-            if "3h" in weather["snow"]:  
-                weather_small["snow_3h"] = weather["snow"]["3h"]
 
-        data = str(weather_small).encode('utf-8')
-        message_future = publisher.publish(topic_path, data=data)
-        message_future.add_done_callback(callback)
+        if last_dt != weather["dt"]:
+            message = {}
+            message["device_id"] = "owm-service"
+            message["timestamp"] = weather["dt"]
+            message["sunrise"] = weather["sys"]["sunrise"]
+            message["sunset"] = weather["sys"]["sunset"]
+            message["id"] = weather["weather"][0]["id"]
+            message["main"] = weather["weather"][0]["main"]
+            message["icon"] = weather["weather"][0]["icon"]
+            message["temp"] = weather["main"]["temp"]
+            message["feels_like"] = weather["main"]["feels_like"]
+            message["humidity"] = weather["main"]["humidity"]
+            message["visibility"] = weather["visibility"]
+            message["w_speed"] = weather["wind"]["speed"]
+            if "deg" in weather["wind"]:
+                message["w_deg"] = weather["wind"]["deg"]
+            
+            if "clouds" in weather:
+                message["all_clouds"] = weather["clouds"]["all"]
+            if "rain" in weather:
+                if "1h" in weather["rain"]:  
+                    message["rain_1h"] = weather["rain"]["1h"]
+                if "3h" in weather["rain"]:  
+                    message["rain_3h"] = weather["rain"]["3h"]
+            if "snow" in weather:
+                if "1h" in weather["snow"]:  
+                    message["snow_1h"] = weather["snow"]["1h"]
+                if "3h" in weather["snow"]:  
+                    message["snow_3h"] = weather["snow"]["3h"]
+
+            data = json.dumps(message).encode('utf-8')
+            message_future = publisher.publish(topic_path, data=data)
+            message_future.add_done_callback(callback)
+            last_dt = weather["dt"]
 
         time.sleep(LOOP_TIME_SLEEP - ((time.time() - starttime) % LOOP_TIME_SLEEP))
   
