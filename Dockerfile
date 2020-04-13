@@ -10,7 +10,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY resources/main.py /home/main.py
-COPY resources/run-collect.sh /home/run-collect.sh
+COPY resources/run-collect.sh /etc/init.d/run-collect.sh
 
-ENTRYPOINT [ "/home/run-collect.sh" ]
+ENTRYPOINT [ "/etc/init.d/run-collect.sh" ]
 
+STOPSIGNAL SIGTERM

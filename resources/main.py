@@ -10,16 +10,16 @@ LOOP_TIME_SLEEP = 60 * 10
 
 def get_weather(api_key, lat, lon):
     url = "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&units=metric&appid={}".format(lat, lon, api_key)
-    print("Getting the weather...")
+    logging.info('Getting the weather...')
     r = requests.get(url)
     return r.json()
 
 def callback(message_future):
     # When timeout is unspecified, the exception method waits indefinitely.
     if message_future.exception(timeout=30):
-        print('Publishing message threw an Exception {}.'.format(message_future.exception()))
+        logging.info('Publishing message threw an Exception {}.'.format(message_future.exception()))
     else:
-        print(message_future.result())
+        logging.info(message_future.result())
 
 def run(argv=None):
     parser = argparse.ArgumentParser()
@@ -28,6 +28,7 @@ def run(argv=None):
     
     parser.add_argument(
       '--api', dest='api', required=True, help='OpenWeatherMap API')
+    
     parser.add_argument(
       '--location', dest='location', required=True, help='Location "lat,lon"')
 
@@ -51,6 +52,9 @@ def run(argv=None):
     starttime = time.time()
 
     last_dt = 0
+
+    logging.info('Starting the loop...')
+
     while True:
         weather = get_weather(api_key, lat_long[0], lat_long[1])
 
